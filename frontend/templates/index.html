@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Blockchain Management</h1>
+
+    <!-- Регистрация пользователя -->
+    <div class="form-container">
+        <h2>Register User</h2>
+        <form id="register-form">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="role">Role:</label>
+            <select id="role" name="role">
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <!-- Изменение контракта -->
+    <div class="form-container">
+        <h2>Add Contract Change</h2>
+        <form id="contract-form">
+            <label for="username_contract">Username:</label>
+            <input type="text" id="username_contract" name="username" required>
+            <label for="contract_id">Contract ID:</label>
+            <input type="text" id="contract_id" name="contract_id" required>
+            <label for="terms">Terms:</label>
+            <input type="text" id="terms" name="terms" required>
+            <button type="submit">Add Contract Change</button>
+        </form>
+    </div>
+
+    <!-- Список пользователей -->
+    <div class="user-list-container">
+        <h2>Registered Users</h2>
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Пользователи будут динамически добавлены здесь -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>

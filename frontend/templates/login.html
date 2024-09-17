@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Blockchain Management</h1>
+
+    <!-- Форма для входа пользователя -->
+    <div class="form-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>  <!-- Добавляем поле для пароля -->
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p id="error-message" style="color: red;"></p>  <!-- Поле для отображения ошибки -->
+    </div>
+
+    <!-- Всплывающее окно для регистрации -->
+    <div id="register-popup" class="popup" style="display: none;"> <!-- Скрытое окно по умолчанию -->
+        <div class="popup-content">
+            <span class="close">&times;</span>
+            <p>You are not registered. Would you like to register?</p>
+            <form id="register-form">
+                <label for="new-username">Username:</label>
+                <input type="text" id="new-username" name="new-username" required>
+                <label for="new-password">Password:</label> <!-- Поле для пароля в регистрации -->
+                <input type="password" id="new-password" name="new-password" required>
+                <label for="role">Role:</label>
+                <select id="role" name="role">
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>

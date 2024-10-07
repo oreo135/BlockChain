@@ -12,11 +12,11 @@
     <!-- Форма для входа пользователя -->
     <div class="form-container">
         <h2>Login</h2>
-        <form id="login-form">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-            <label for="password">Password:</label>  <!-- Добавляем поле для пароля -->
-            <input type="password" id="password" name="password" required>
+        <form id="login-form" autocomplete="off">
+            <label for="user">Username:</label>
+            <input type="text" id="user" name="user" required>
+            <label for="pass">Password:</label>
+            <input type="password" id="pass" name="pass" required autocomplete="new-password">
             <button type="submit">Login</button>
         </form>
         <p id="error-message" style="color: red;"></p>  <!-- Поле для отображения ошибки -->
@@ -27,11 +27,11 @@
         <div class="popup-content">
             <span class="close">&times;</span>
             <p>You are not registered. Would you like to register?</p>
-            <form id="register-form">
-                <label for="new-username">Username:</label>
-                <input type="text" id="new-username" name="new-username" required>
-                <label for="new-password">Password:</label> <!-- Поле для пароля в регистрации -->
-                <input type="password" id="new-password" name="new-password" required>
+            <form id="register-form" autocomplete="off">
+                <label for="new-user">Username:</label>
+                <input type="text" id="new-user" name="new-user" required>
+                <label for="new-pass">Password:</label> <!-- Поле для пароля в регистрации -->
+                <input type="password" id="new-pass" name="new-pass" required autocomplete="new-password">
                 <label for="role">Role:</label>
                 <select id="role" name="role">
                     <option value="admin">Admin</option>

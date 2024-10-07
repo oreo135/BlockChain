@@ -226,3 +226,4 @@ class Blockchain:
 
     def notify_admin(self, message: str):
         print(f"Admin notification: {message}")
+

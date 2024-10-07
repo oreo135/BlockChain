@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
+from passlib.context import CryptContext
 
 # Модули проекта
 from models import User, Role, Base
@@ -19,6 +20,9 @@ from services.auth import oauth2_scheme, create_access_token, create_refresh_tok
 from services.user_management import assign_role, register_user
 from controllers import users, contracts, voting, chat
 import blockchain.blockchain_func as _blockchain
+
+# Инициализация контекста для хэширования паролей
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Добавляем путь к директории backend
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -30,22 +34,50 @@ load_dotenv()
 blockchain = _blockchain.Blockchain()
 
 # Создание приложения FastAPI с lifespan для создания администратора при старте
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     db_session = SessionLocal()
+#     try:
+#         admin_user = db_session.query(User).filter(User.username == "admin").first()
+#         if not admin_user:
+#             # Хэшируем пароль перед сохранением
+#             hashed_password = pwd_context.hash("admin")
+#             admin = User(
+#                 username="admin",
+#                 hashed_password=hashed_password,  # Используем зашифрованный пароль
+#                 role=Role.ADMIN.value  # Устанавливаем роль администратора
+#             )
+#             db_session.add(admin)
+#             db_session.commit()
+#             print("Admin user created")
+#         else:
+#             print("Admin user already exists")
+#     finally:
+#         db_session.close()
+#     yield
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db_session = SessionLocal()
     try:
+        # Удаление старого пользователя "admin" (если он существует)
         admin_user = db_session.query(User).filter(User.username == "admin").first()
-        if not admin_user:
-            admin = User(
-                username="admin",
-                hashed_password=create_access_token({"sub": "admin"}),
-                role=Role.ADMIN.value  # Устанавливаем роль администратора
-            )
-            db_session.add(admin)
+        if admin_user:
+            db_session.delete(admin_user)
             db_session.commit()
-            print("Admin user created")
-        else:
-            print("Admin user already exists")
+            print("Old admin user deleted")
+
+        # Создание нового пользователя "admin" с хэшированным паролем
+        hashed_password = pwd_context.hash("admin")  # Хэшируем пароль "admin"
+        admin = User(
+            username="admin",
+            hashed_password=hashed_password,  # Используем зашифрованный пароль
+            role=Role.ADMIN.value  # Устанавливаем роль администратора
+        )
+        db_session.add(admin)
+        db_session.commit()
+        print("New admin user created with hashed password")
+
     finally:
         db_session.close()
     yield
@@ -84,23 +116,44 @@ async def refresh_access_token(refresh_token: str):
 
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+
 # Регистрация нового пользователя
 @app.post("/register/", response_model=UserResponse)
 async def register_user_endpoint(user: UserCreate, db: Session = Depends(get_db)):
-    return register_user(user=user, db=db)
+    print(f"Register attempt: {user.username}, Role: {user.role}")  # Добавляем лог
+    response = register_user(user=user, db=db)
+    print(f"Register result: {response}")  # Логируем результат
+    return response
 
-# Авторизация (получение JWT токенов)
+
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    print(f"Login attempt for user: {form_data.username}")  # Отладочный вывод
     user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Неправильное имя пользователя или пароль")
+
+    # Если пользователь не найден, возвращаем 404
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found. Please register at /register.")
+
+    # Логируем введённый и сохранённый пароли
+    print(f"Entered password: {form_data.password}")
+    print(f"Stored hashed password: {user.hashed_password}")
+
+    # Проверяем пароль
+    if not pwd_context.verify(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     access_token_expires = timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)))
     refresh_token_expires = timedelta(days=int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7)))
 
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     refresh_token = create_refresh_token(data={"sub": user.username}, expires_delta=refresh_token_expires)
+
+    print("Login successful")  # Отладочный вывод
 
     return {
         "access_token": access_token,

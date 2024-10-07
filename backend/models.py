@@ -23,10 +23,11 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     last_update = Column(DateTime, default=dt.datetime.utcnow)
 
-    def __init__(self, username: str, hashed_password: str, contract_active: bool = True, is_active: bool = True):
+    def __init__(self, username: str, hashed_password: str, role: str = Role.NONE.value,
+                 contract_active: bool = True, is_active: bool = True):
         self.username = username
         self.hashed_password = hashed_password
-        self.role = Role.NONE.value
+        self.role = role
         self.contract_active = contract_active
         self.is_active = is_active
         self.last_update = dt.datetime.utcnow()

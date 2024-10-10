@@ -30,15 +30,15 @@ class User(Base):
         self.role = role
         self.contract_active = contract_active
         self.is_active = is_active
-        self.last_update = dt.datetime.utcnow()
+        self.last_update = dt.datetime.now(dt.timezone.utc)  # Используем временную зону
 
     def assign_role(self, role: Role):
         self.role = role.value
-        self.last_update = dt.datetime.utcnow()
+        self.last_update = dt.datetime.now(dt.timezone.utc)  # Используем временную зону
 
     def has_role(self, role: Role) -> bool:
         return self.role == role.value
 
     def update_contract_status(self, status: bool):
         self.contract_active = status
-        self.last_update = dt.datetime.utcnow()
+        self.last_update = dt.datetime.now(dt.timezone.utc)

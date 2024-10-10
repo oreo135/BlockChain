@@ -155,12 +155,22 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
     print("Login successful")  # Отладочный вывод
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "redirect_url": "/dashboard" if user.role != Role.ADMIN.value else "/admin_dashboard"
-    }
+    # Перенаправляем на страницу в зависимости от роли пользователя
+    if user.role == Role.ADMIN.value:
+        return {"redirect_url": "/admin_page"}
+    else:
+        return {"redirect_url": "/user_page"}
+
+
+@app.get("/admin_page", response_class=HTMLResponse)
+async def admin_page(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("admin_page.html", {"request": request, "username": current_user.username})
+
+
+@app.get("/user_page", response_class=HTMLResponse)
+async def user_page(request: Request, current_user: User = Depends(get_current_user)):
+    return templates.TemplateResponse("user_page.html", {"request": request, "username": current_user.username})
+
 
 # Главная страница
 @app.get("/", response_class=HTMLResponse)
@@ -182,13 +192,15 @@ async def logout_user(request: Request):
     response.delete_cookie("username")
     return response
 
-# Защищенная страница (/dashboard)
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    username = request.cookies.get("username")
-    if not username:
-        return RedirectResponse(url="/login", status_code=302)
-    return templates.TemplateResponse("dashboard.html", {"request": request, "username": username})
+
+# # Защищенная страница (/dashboard)
+# @app.get("/dashboard", response_class=HTMLResponse)
+# async def dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+#     if current_user.has_role(Role.ADMIN):
+#         return templates.TemplateResponse("admin_page.html", {"request": request, "username": current_user.username})
+#     else:
+#         return templates.TemplateResponse("user_page.html", {"request": request, "username": current_user.username})
+
 
 # Назначение ролей пользователям (только для админа)
 @app.post("/assign_role/")

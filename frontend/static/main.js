@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const data = await response.json();
                     localStorage.setItem('access_token', data.access_token); // Сохраняем access токен
                     localStorage.setItem('refresh_token', data.refresh_token); // Сохраняем refresh токен
-                    window.location.href = '/dashboard'; // Перенаправляем на защищённую страницу
+                    window.location.href = data.redirect_url; // Перенаправляем на соответствующую страницу
                     console.log("Login successful");
                 } else {
                     const data = await response.json();
@@ -166,7 +166,6 @@ socket.addEventListener('message', function (event) {
 socket.addEventListener('close', function (event) {
     console.log('WebSocket connection closed');
 });
-
 
 socket.addEventListener('error', function (event) {
     console.error('WebSocket error:', event);

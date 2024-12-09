@@ -4,24 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Blockchain Management{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body>
+    <!-- Верхний заголовок -->
     <header>
-        <h1>Blockchain Management System</h1>
+        <button id="toggleSidebar" title="Toggle Menu">☰</button>
+        <h1 class="h3">Blockchain Management System</h1>
+        {% if user %}
+        <p>Вы вошли как: {{ user.username }}</p>
+        <a href="/auth/logout" class="logout">Logout</a>
+        {% endif %}
     </header>
-    <nav>
-        <ul>
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/logout">Logout</a></li>
-        </ul>
-    </nav>
+
+    <!-- Выдвигающаяся панель навигации -->
+    <div id="sidebar" class="sidebar">
+        <h5>Navigation</h5>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/user/profile">Edit Profile</a>
+        <a href="/search">Search</a>
+        <button id="closeSidebar" class="btn btn-danger mt-3">Close</button>
+    </div>
+
+    <!-- Основное содержимое -->
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Кнопка для открытия чата -->
+    {% if user %}
+    <button class="chat-button" title="Open Chat">💬</button>
+
+<!-- Разметка чата -->
+<div id="chat" class="chat" style="display: none;">
+    <div class="chat-header">
+        <h5>Chat</h5>
+        <button id="toggleUserList" class="btn btn-sm btn-secondary">Users</button>
+        <button id="closeChat" class="btn btn-sm btn-danger">✕</button>
+    </div>
+
+    <!-- Панель выбора пользователей -->
+    <div id="userList" class="user-list" style="display: none;">
+        <div class="form-group mb-3">
+            <label for="chatUserSelect" class="form-label">Select a user:</label>
+            <select id="chatUserSelect" class="form-select">
+                <!-- Пользователи загружаются динамически -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Вкладки -->
+    <div id="chatTabs" class="chat-tabs">
+        <!-- Динамически добавляемые вкладки -->
+    </div>
+
+    <!-- Контент чата -->
+    <div class="chat-body">
+        <div id="chatContent" class="chat-content">
+            <!-- Сообщения -->
+        </div>
+    </div>
+
+    <!-- Ввод сообщения -->
+    <div class="chat-footer">
+        <textarea id="chatInput" class="form-control" rows="2" placeholder="Type your message..."></textarea>
+        <button id="sendMessage" class="btn btn-primary">Send</button>
+    </div>
+</div>
+
+     <div class="chat-footer">
+            <button id="sendChat" class="btn btn-primary mt-2">Send</button>
+     </div>
+
+    {% endif %}
+
+    <!-- Футер -->
     <footer>
         <p>&copy; 2024 Blockchain Management</p>
     </footer>
-    <script src="/static/js/main.js"></script>
+
+    <!-- Скрипты -->
+    <script src="/static/main.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

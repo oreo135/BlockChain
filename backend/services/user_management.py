@@ -1,32 +1,51 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
+from backend.models import Role, User
 from passlib.context import CryptContext
-from models import User, Role
-from schemas import UserCreate, RoleAssignmentRequest
-from database import get_db
+from backend.schemas import RoleAssignmentRequest, UserCreate
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Создаем контекст для хэширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Регистрация нового пользователя
-def register_user(user: UserCreate, db: Session):
-    hashed_password = pwd_context.hash(user.password)
-    db_user = User(username=user.username, hashed_password=hashed_password)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+# Тестирование хэширования и проверки
+password = "my_secure_password"
+hashed = pwd_context.hash(password)
+print("Hashed password:", hashed)
 
-# Назначение ролей пользователям (только для админа)
-def assign_role(request: RoleAssignmentRequest, db: Session, admin_user: User):
+assert pwd_context.verify(password, hashed), "Password verification failed"
+
+# Асинхронная регистрация нового пользователя
+async def register_user(user: UserCreate, db: AsyncSession):
+    hashed_password = pwd_context.hash(user.password)
+    await db.execute(
+        text("INSERT INTO users (username, hashed_password, role, is_active) "
+             "VALUES (:username, :hashed_password, :role, :is_active)"),
+        {
+            "username": user.username,
+            "hashed_password": hashed_password,
+            "role": "user",
+            "is_active": True,
+        }
+    )
+    await db.commit()
+
+# Асинхронное назначение ролей пользователям (только для админа)
+async def assign_role(request: RoleAssignmentRequest, db: AsyncSession, admin_user: User):
+    """
+    Асинхронная логика назначения роли пользователю.
+    """
     if admin_user.role != Role.ADMIN.value:
         raise HTTPException(status_code=403, detail="Только администратор может назначать роли")
 
-    user = db.query(User).filter(User.username == request.username).first()
+    result = await db.execute(text(
+        f"SELECT * FROM users WHERE username='{request.username}'"))
+    user = result.fetchone()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    user.role = request.role.value
-    db.commit()
+    await db.execute(
+        text(f"UPDATE users SET role='{request.role.value}' WHERE username='{request.username}'")
+    )
+    await db.commit()
 
-    return {"message": f"Роль {request.role} назначена пользователю {user.username}"}
+    return {"message": f"Роль {request.role} назначена пользователю {request.username}"}

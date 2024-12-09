@@ -1,9 +1,6 @@
-import sys
 import os
-
 # Добавляем путь к backend, где находятся основные файлы, такие как main.py
 import sys
-import os
 
 # Добавляем путь к backend
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))

@@ -1,8 +1,16 @@
 import datetime as _dt
 import hashlib as _hashlib
 import json as _json
-from models import User, Role
+import os
+import sys
+
+from passlib.context import CryptContext
+
 from cryptography.fernet import Fernet
+from backend.models import Role, User
+
+# Инициализация контекста для хэширования паролей
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class Blockchain:
@@ -95,18 +103,21 @@ class Blockchain:
 
     def get_vote_results(self, issue: str):
         for block in reversed(self.chain):
-            if block["type"] == "vote" and block["issue"] == issue:
-                return block["votes"]
+            # Проверяем, есть ли ключ 'type' и 'issue' в блоке
+            if "type" in block and "issue" in block:
+                if block["type"] == "vote" and block["issue"] == issue:
+                    return block["votes"]
         return {}
 
     def close_vote(self, issue: str):
         # Находим блок с голосованием и помечаем его как закрытое
         for block in reversed(self.chain):
-            if block["type"] == "vote" and block["issue"] == issue:
-                block["closed"] = True
-                self.mine_block(data=_json.dumps(block))
-                self.log_security_event(f"Vote on issue '{issue}' closed.")
-                return block["votes"]
+            if "type" in block and "issue" in block:
+                if block["type"] == "vote" and block["issue"] == issue:
+                    block["closed"] = True
+                    self.mine_block(data=_json.dumps(block))
+                    self.log_security_event(f"Vote on issue '{issue}' closed.")
+                    return block["votes"]
         return None
 
     # Логирование событий доступа к данным
@@ -125,7 +136,7 @@ class Blockchain:
         if user.role == Role.ADMIN:
             return True
         # Проверка доступа к данным (может быть настроено по-другому)
-        return key in user.data
+        return False
 
     # Блокчейн функции
     def mine_block(self, data: str) -> dict:
@@ -226,4 +237,103 @@ class Blockchain:
 
     def notify_admin(self, message: str):
         print(f"Admin notification: {message}")
+
+#
+# def blockchain_demo():
+#     # Инициализация блокчейна
+#     blockchain = Blockchain()
+#
+#     # Создание пользователей
+#
+#     # Создаем пользователей с хэшированными паролями
+#     admin_user = User(
+#         username="admin1",
+#         role=Role.ADMIN,
+#         hashed_password=pwd_context.hash("admin_password")
+#     )
+#
+#     user1 = User(
+#         username="user1",
+#         role=Role.USER,
+#         hashed_password=pwd_context.hash("user1_password")
+#     )
+#
+#     user2 = User(
+#         username="user2",
+#         role=Role.USER,
+#         hashed_password=pwd_context.hash("user2_password")
+#     )
+#
+#     # Добавление пользователей в блокчейн
+#     blockchain.add_user(admin_user)
+#     blockchain.add_user(user1)
+#     blockchain.add_user(user2)
+#     print("\n=== Пользователи успешно добавлены в блокчейн ===")
+#
+#     # Назначение роли
+#     blockchain.assign_role(admin_user, user1, Role.ADMIN)
+#     print(f"\nРоль пользователя {user1.username}: {user1.role}")
+#
+#     # Генерация уникального ключа для пользователя
+#     unique_key = blockchain.generate_unique_key(user1)
+#     print(f"Уникальный ключ для {user1.username}: {unique_key}")
+#
+#     # Попытка добавления изменения контракта обычным пользователем (без прав администратора)
+#     contract_data = {"salary": 5000, "position": "Engineer"}
+#     try:
+#         blockchain.add_contract_change(user2, contract_data)  # Это действие требует прав администратора
+#     except PermissionError as e:
+#         print(f"\nОшибка: {e}")
+#
+#     # Добавление изменения контракта администратором
+#     blockchain.add_contract_change(admin_user, contract_data)
+#     print(f"\nИзменение контракта добавлено администратором: {contract_data}")
+#
+#     # Получение информации о пользователе
+#     employee_info = blockchain.get_employee_info("user1")
+#     print(f"\nИнформация о {user1.username}: {employee_info}")
+#
+#     # Получение текущей информации о сотрудниках
+#     current_employee_info = blockchain.get_current_employee_info()
+#     print(f"\nТекущие сотрудники:\n{current_employee_info}")
+#
+#     # Создание и закрытие голосования
+#     votes = [{"voter": "user1", "vote": "yes"}, {"voter": "user2", "vote": "no"}]
+#     blockchain.collect_votes(issue="Approve project", votes=votes)
+#     vote_results = blockchain.get_vote_results("Approve project")
+#     print(f"\nРезультаты голосования по вопросу 'Approve project': {vote_results}")
+#
+#     blockchain.close_vote("Approve project")
+#     print("\nГолосование по вопросу 'Approve project' закрыто.")
+#
+#     # Логирование доступа к данным
+#     blockchain.log_data_access(accessing_user=admin_user, target_user=user1, key="contract")
+#     print(f"\nДоступ к данным {user1.username} зафиксирован.")
+#
+#     # Проверка доступа к данным обычного пользователя (без прав)
+#     access_granted = blockchain.check_access(user2, key="contract_active")
+#     if not access_granted:
+#         print(f"\nОшибка: У пользователя {user2.username} нет доступа к данным 'contract'.")
+#
+#     # Проверка доступа администратора к данным
+#     access_granted_admin = blockchain.check_access(admin_user, key="contract")
+#     print(f"\nДоступ администратора к данным: {access_granted_admin}")
+#
+#     # Майнинг блока
+#     blockchain.mine_block("New block data")
+#     print(f"\nПоследний блок:\n{blockchain.get_previous_block()}")
+#
+#     # Проверка целостности цепочки блоков
+#     is_valid = blockchain.is_chain_valid()
+#     print(f"\nЦелостность блокчейна: {is_valid}")
+#
+#     # Логирование и аудит безопасности
+#     blockchain.log_security_event("Test security event")
+#     blockchain.audit_chain()
+#
+# # Вызов функции для демонстрации работы блокчейна
+# blockchain_demo()
+
+
+
 

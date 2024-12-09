@@ -3,8 +3,12 @@
 {% block title %}User Dashboard{% endblock %}
 
 {% block content %}
-    <h2>User Dashboard</h2>
-    <p>Добро пожаловать, {{ username }}!</p>
-    <a href="/view_contracts">Просмотр контрактов</a>
-    <a href="/profile">Ваш профиль</a>
+    <div class="container">
+        <h2>User Dashboard</h2>
+        <p>Welcome, {{ username }}!</p>
+        <div class="d-flex justify-content-around">
+            <a href="/view_contracts" class="btn btn-info">View Contracts</a>
+            <a href="/profile" class="btn btn-secondary">Your Profile</a>
+        </div>
+    </div>
 {% endblock %}

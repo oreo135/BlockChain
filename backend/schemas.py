@@ -1,73 +1,71 @@
-from pydantic import BaseModel
 from typing import Dict, Optional
-from models import Role
+from datetime import datetime
+from backend.models import Role
+from pydantic import BaseModel, Field
+
 
 # Модель для создания пользователя через API
 class UserCreate(BaseModel):
-    username: str
-    password: str
-    role: str = "user"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "username": "new_user",
-                "password": "strongpassword123",
-                "role": "user"
-            }
-        }
-
-# Модель для возврата данных пользователя через API
-class UserResponse(BaseModel):
-    username: str
-    role: str
-    is_active: bool
+    username: str = Field(..., description="Username of the user")
+    password: str = Field(..., description="Password of the user")
+    role: str = Field(default="user", description="Role assigned to the user")
 
     class Config:
         from_attributes = True  # Поддержка ORM моделей SQLAlchemy
-        json_schema_extra = {
-            "example": {
-                "username": "user-1",
-                "role": "user",
-                "is_active": True
-            }
-        }
+
+
+class UserLogin(BaseModel):
+    username: str = Field(..., description="Username of the user")
+    password: str = Field(..., description="Password of the user")
+
+    class Config:
+        from_attributes = True
+
+
+# Модель для возврата данных пользователя через API
+class UserResponse(BaseModel):
+    username: str = Field(..., description="Username of the user")
+    role: str = Field(..., description="Role of the user")
+    is_active: bool = Field(..., description="User's active status")
+
+    class Config:
+        from_attributes = True  # Поддержка ORM моделей SQLAlchemy
 
 # Модель данных для изменения контракта
 class ContractChangeRequest(BaseModel):
-    username: str  # Имя пользователя, чей контракт нужно изменить
-    contract_data: Dict[str, str]  # Словарь с данными контракта
+    username: str = Field(..., description="Username of the user whose contract needs to be changed")
+    contract_data: Dict[str, str] = Field(..., description="Dictionary with contract data")
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "username": "john_doe",
-                "contract_data": {
-                    "position": "Software Engineer",
-                    "salary": "120000",
-                    "contract_start": "2023-01-01",
-                    "contract_end": "2024-01-01"
-                }
-            }
-        }
+        from_attributes = True  # Поддержка ORM моделей SQLAlchemy
 
 # Модель для назначения роли пользователю (админом)
 class RoleAssignmentRequest(BaseModel):
-    username: str
-    role: Role
+    username: str = Field(..., description="Username of the user")
+    role: Role = Field(..., description="Role to assign to the user")
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "username": "user-1",
-                "role": "user"
-            }
-        }
+        from_attributes = True  # Поддержка ORM моделей SQLAlchemy
 
 # Модель для авторизации и возврата токена
 class Token(BaseModel):
-    access_token: str
-    token_type: str
+    access_token: str = Field(..., description="Access token")
+    token_type: str = Field(..., description="Token type, e.g., 'bearer'")
 
+# Модель для данных токена
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    username: Optional[str] = Field(None, description="Username associated with the token")
+
+class MessageCreate(BaseModel):
+    receiver_id: int
+    content: str
+
+class MessageResponse(BaseModel):
+    id: int
+    sender_id: int
+    receiver_id: int
+    content: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Profile</h2>
+    {% if user %}
+        <div class="card">
+            <div class="card-header">
+                <strong>User Information</strong>
+            </div>
+            <div class="card-body">
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Role:</strong> {{ user.role }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            You must be logged in to view this page.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

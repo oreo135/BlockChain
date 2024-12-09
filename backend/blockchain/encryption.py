@@ -1,5 +1,6 @@
 from cryptography.fernet import Fernet
 
+
 # Генерация ключа шифрования
 def generate_key():
     return Fernet.generate_key()

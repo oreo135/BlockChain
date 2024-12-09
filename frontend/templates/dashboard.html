@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Основной контент -->
+        <p>Debug user object: {{ user }}</p>
+        <p>Debug user details: {{ user.username if user else 'No user' }}</p>
+        <div class="col-12">
+            <h2 class="mt-4">Welcome to the Dashboard</h2>
+            {% if user %}
+                <p>Hello, {{ user.username }}! Your role is <strong>{{ user.role }}</strong>.</p>
+            {% else %}
+                <p>Please log in to access the dashboard.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

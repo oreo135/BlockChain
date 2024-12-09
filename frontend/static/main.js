@@ -1,154 +1,147 @@
-// Функция для проверки и обновления access токена
-async function refreshToken() {
-    const refresh_token = localStorage.getItem('refresh_token');
-    if (!refresh_token) {
-        console.log("No refresh token found");
-        return false; // Нет refresh токена, нужно заново авторизоваться
-    }
+// Проверка загрузки main.js
+console.log('main.js загружен');
 
-    try {
-        const response = await fetch('/refresh_token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: refresh_token })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            console.log("Access token refreshed");
-            return true; // Токен обновлен
-        } else {
-            console.log("Failed to refresh token");
-            return false; // Не удалось обновить токен
-        }
-    } catch (error) {
-        console.error('Error during token refresh:', error);
-        return false; // Произошла ошибка при обновлении токена
-    }
-}
-
-// Функция для выполнения защищенных запросов с автоматическим обновлением токена
+// Функция для выполнения защищённых запросов
 async function fetchWithAuth(url, options = {}) {
-    // Проверяем и обновляем токен
-    const tokenUpdated = await refreshToken();
-
-    // Если токен не удалось обновить, перенаправляем на страницу входа
-    if (!tokenUpdated) {
-        window.location.href = '/login';
-        return;
-    }
-
-    const access_token = localStorage.getItem('access_token');
-
-    // Добавляем токен в заголовки запроса
-    options.headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${access_token}`
-    };
-
-    // Выполняем запрос
-    const response = await fetch(url, options);
+    console.log('fetchWithAuth вызван для URL:', url);
+    const response = await fetch(url, {
+        ...options,
+        credentials: 'include', // Гарантирует передачу куков с запросом
+    });
 
     if (response.status === 401) {
-        // Если запрос отклонен, перенаправляем пользователя на страницу входа
-        window.location.href = '/login';
+        console.error('Unauthorized, redirecting to login');
+        window.location.href = '/login'; // Перенаправление на страницу логина
     }
 
     return response;
 }
 
-// Обработчик события для формы входа пользователя
-document.addEventListener("DOMContentLoaded", function() {
-    const loginForm = document.getElementById('login-form');
+// Функция для загрузки защищённых страниц
+async function fetchProtectedPage(url) {
+    try {
+        const response = await fetchWithAuth(url, { method: 'GET' });
+
+        if (response.ok) {
+            const pageContent = await response.text();
+            document.body.innerHTML = pageContent; // Загрузка содержимого страницы
+
+            // Повторная инициализация скриптов после динамической загрузки
+            initializeSidebar();
+            initializeChat();
+            console.log(`${url} loaded successfully.`);
+        } else {
+            console.error(`Failed to load ${url}`);
+        }
+    } catch (error) {
+        console.error('Error loading page:', error);
+    }
+}
+
+// Обработчик для формы входа
+document.addEventListener("DOMContentLoaded", function () {
+    const loginForm = document.getElementById('loginForm');
 
     if (loginForm) {
-        loginForm.addEventListener('submit', async function (e) {
-            e.preventDefault(); // Предотвращаем отправку формы по умолчанию
+        loginForm.addEventListener('submit', async function (event) {
+            event.preventDefault(); // Предотвращаем отправку формы
 
-            // Получаем значения полей username и password
-            const username = document.getElementById('user').value;
-            const password = document.getElementById('pass').value;
-
-            console.log("Login attempt:", username);  // Логируем попытку входа
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
             try {
-                // Отправляем POST-запрос на сервер для получения токенов
-                const response = await fetch('/token', {
+                const response = await fetch('/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        'username': username,
-                        'password': password
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                    credentials: 'include', // Передача куков
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('access_token', data.access_token); // Сохраняем access токен
-                    localStorage.setItem('refresh_token', data.refresh_token); // Сохраняем refresh токен
-                    window.location.href = data.redirect_url; // Перенаправляем на соответствующую страницу
-                    console.log("Login successful");
+                    alert('Login successful');
+                    window.location.href = '/dashboard'; // Перенаправляем пользователя
                 } else {
-                    const data = await response.json();
-                    document.getElementById('error-message').textContent = data.detail; // Выводим ошибку
-                    console.log("Login failed:", data.detail);  // Логируем ошибку
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.detail || 'Login failed'}`);
                 }
             } catch (error) {
                 console.error('Error during login:', error);
-                alert('An error occurred during login. Please try again.');
+                alert('An error occurred. Please try again.');
             }
         });
     }
 });
 
-// Обработчик события для формы регистрации пользователя
-document.addEventListener("DOMContentLoaded", function() {
-    const registerForm = document.getElementById('register-form');
+// Пример загрузки dashboard
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.location.pathname === '/dashboard') {
+        fetchProtectedPage('/dashboard');
+    }
+});
+
+// Обработчик для формы регистрации
+document.addEventListener("DOMContentLoaded", function () {
+    const registerForm = document.getElementById('registerForm');
 
     if (registerForm) {
-        registerForm.addEventListener('submit', async function (e) {
-            e.preventDefault(); // Предотвращаем отправку формы по умолчанию
+        registerForm.addEventListener('submit', async function (event) {
+            event.preventDefault(); // Предотвращаем отправку формы
 
-            // Получаем значения полей формы
-            const username = document.getElementById('new-user').value;
-            const password = document.getElementById('new-pass').value;
-            const role = document.getElementById('role').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
             try {
-                // Отправляем POST-запрос на сервер для регистрации пользователя
-                const response = await fetch('/register/', {
+                const response = await fetch('/auth/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username, password: password, role: role })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                    credentials: 'include', // Гарантирует передачу куков
                 });
 
                 if (response.ok) {
                     alert('Registration successful');
-                    window.location.href = '/login'; // Перенаправляем на страницу входа после регистрации
+                    window.location.href = '/login'; // Перенаправляем после успешной регистрации
                 } else {
-                    const data = await response.json();
-                    alert(data.detail); // Показываем ошибку
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.detail[0]?.msg || 'Registration failed'}`);
                 }
             } catch (error) {
                 console.error('Error during registration:', error);
-                alert('An error occurred during registration. Please try again.');
+                alert('An error occurred. Please try again later.');
             }
         });
     }
 });
 
-// Пример использования fetchWithAuth для защищенного запроса
-async function getDashboardData() {
-    const response = await fetchWithAuth('/dashboard', {
-        method: 'GET'
-    });
+// Функция для загрузки admin_page
+async function getAdminPageData() {
+    console.log('getAdminPageData вызван');
+    const response = await fetchWithAuth('/admin_page', { method: 'GET' });
 
     if (response.ok) {
-        const data = await response.json();
-        console.log('Dashboard data:', data);
+        const data = await response.text();
+        document.documentElement.innerHTML = data;
+        console.log('Admin page loaded');
     } else {
-        console.error('Failed to fetch dashboard data');
+        console.error('Failed to load admin page');
+    }
+}
+
+// Функция для загрузки user_page
+async function getUserPageData() {
+    console.log('getUserPageData вызван');
+    const response = await fetchWithAuth('/user_page', { method: 'GET' });
+
+    if (response.ok) {
+        const data = await response.text();
+        document.documentElement.innerHTML = data;
+        console.log('User page loaded');
+    } else {
+        console.error('Failed to load user page');
     }
 }
 

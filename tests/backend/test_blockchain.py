@@ -1,6 +1,7 @@
 import pytest
 from blockchain_func import Blockchain
-from models import User, Role
+from models import Role, User
+
 
 @pytest.fixture
 def blockchain():

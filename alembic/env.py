@@ -1,35 +1,39 @@
-import os
-import sys
 from logging.config import fileConfig
-from sqlalchemy import create_engine
-from sqlalchemy import pool
+from sqlalchemy import create_engine, pool
 from alembic import context
-from dotenv import load_dotenv
+import os
+import logging
+from backend.models import User, Message
 
-# Добавляем путь к директории backend
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Загружаем переменные окружения
-load_dotenv()
-
-# Импортируем базу данных и модели
-from backend.database import Base  # Корректный импорт базы данных
-from backend import models  # Импорт всех моделей через пакет
-
-# Настройка конфигурации Alembic
+# Alembic Config object, доступ к значению в alembic.ini
 config = context.config
-fileConfig(config.config_file_name)
 
-# Подключаем метаданные моделей для создания таблиц
+# Подключение логирования
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# MetaData ваших моделей (для autogenerate)
+from backend.utils.database import Base
+
 target_metadata = Base.metadata
 
-# Получаем URL базы данных из переменных окружения
-database_url = os.getenv("DATABASE_URL")
+print("=== Tables in Base.metadata ===")
+print(target_metadata.tables.keys())
+print("===============================")
 
-def run_migrations_offline():
-    """Run migrations in 'offline' mode."""
+
+# Получение строки подключения из alembic.ini или переменной окружения
+DATABASE_URL = config.get_main_option("sqlalchemy.url")
+
+# Если используется asyncpg в основном приложении, меняем на psycopg2 для миграций
+if "asyncpg" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("asyncpg", "psycopg2")
+
+
+def run_migrations_offline() -> None:
+    """Запуск миграций в 'offline' режиме."""
     context.configure(
-        url=database_url,  # Используем переменную окружения для подключения к базе данных
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -38,19 +42,23 @@ def run_migrations_offline():
     with context.begin_transaction():
         context.run_migrations()
 
-def run_migrations_online():
-    """Run migrations in 'online' mode."""
-    connectable = create_engine(  # Используем create_engine напрямую для online режима
-        database_url,  # Используем переменную окружения для подключения к базе данных
-        poolclass=pool.NullPool,
+
+def run_migrations_online() -> None:
+    """Запуск миграций в 'online' режиме."""
+    connectable = create_engine(
+        DATABASE_URL, poolclass=pool.NullPool
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
         with context.begin_transaction():
             context.run_migrations()
 
+
+# Выбор режима миграций (offline/online)
 if context.is_offline_mode():
     run_migrations_offline()
 else:

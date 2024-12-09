@@ -1,48 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blockchain Management</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <h1>Blockchain Management</h1>
+{% extends "base.html" %}
 
-    <!-- Форма для входа пользователя -->
-    <div class="form-container">
-        <h2>Login</h2>
-        <form id="login-form" autocomplete="off">
-            <label for="user">Username:</label>
-            <input type="text" id="user" name="user" required>
-            <label for="pass">Password:</label>
-            <input type="password" id="pass" name="pass" required autocomplete="new-password">
-            <button type="submit">Login</button>
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="height: calc(100vh - 80px);">
+    <div class="text-center">
+        <h2 class="mb-4">Login</h2>
+        <form id="loginForm" action="/auth/login" method="post" autocomplete="off">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" class="form-control input-small" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" class="form-control input-small" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
         </form>
-        <p id="error-message" style="color: red;"></p>  <!-- Поле для отображения ошибки -->
     </div>
-
-    <!-- Всплывающее окно для регистрации -->
-    <div id="register-popup" class="popup" style="display: none;"> <!-- Скрытое окно по умолчанию -->
-        <div class="popup-content">
-            <span class="close">&times;</span>
-            <p>You are not registered. Would you like to register?</p>
-            <form id="register-form" autocomplete="off">
-                <label for="new-user">Username:</label>
-                <input type="text" id="new-user" name="new-user" required>
-                <label for="new-pass">Password:</label> <!-- Поле для пароля в регистрации -->
-                <input type="password" id="new-pass" name="new-pass" required autocomplete="new-password">
-                <label for="role">Role:</label>
-                <select id="role" name="role">
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                </select>
-                <button type="submit">Register</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Подключение вашего main.js с версией -->
-    <script src="/static/main.js?v=1.0"></script>
-</body>
-</html>
+</div>
+{% endblock %}

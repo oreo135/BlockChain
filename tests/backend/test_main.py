@@ -1,9 +1,9 @@
+import pytest
+from database import SessionLocal, engine
 from fastapi.testclient import TestClient
 from main import app
-from models import User, Role
-from database import SessionLocal, engine
+from models import Role, User
 from sqlalchemy.orm import sessionmaker
-import pytest
 
 client = TestClient(app)
 
